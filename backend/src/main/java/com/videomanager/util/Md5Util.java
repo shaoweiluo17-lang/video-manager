@@ -22,7 +22,7 @@ public class Md5Util {
             byte[] digest = md.digest(str.getBytes());
             return bytesToHex(digest);
         } catch (NoSuchAlgorithmException e) {
-            throw new RuntimeException("MD5 algorithm not found", e);
+            throw new RuntimeException("没有找到MD5算法", e);
         }
     }
     
@@ -41,7 +41,7 @@ public class Md5Util {
             
             return bytesToHex(md.digest());
         } catch (NoSuchAlgorithmException e) {
-            throw new RuntimeException("MD5 algorithm not found", e);
+            throw new RuntimeException("没有找到MD5算法", e);
         }
     }
     
@@ -60,13 +60,13 @@ public class Md5Util {
                 md.update(buffer, 0, bytesRead);
                 totalRead += bytesRead;
                 if (callback != null && fileSize > 0) {
-                    callback.onProgress(totalRead * 100 / fileSize);
+                    callback.onProgress((int)(totalRead * 100 / fileSize));
                 }
             }
             
             return bytesToHex(md.digest());
         } catch (NoSuchAlgorithmException e) {
-            throw new RuntimeException("MD5 algorithm not found", e);
+            throw new RuntimeException("没有找到MD5算法", e);
         }
     }
     
