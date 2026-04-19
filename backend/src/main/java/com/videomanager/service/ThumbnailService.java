@@ -38,14 +38,24 @@ public class ThumbnailService {
      */
     public String generateImageThumbnail(File imageFile) {
         try {
-            // 确保缩略图目录存在
-            File thumbDir = new File(thumbnailDir + "/image");
-            if (!thumbDir.exists()) {
-                thumbDir.mkdirs();
+            // 确保缩略图目录存在（使用绝对路径）
+            File thumbDir = new File(thumbnailDir, "image");
+            if (!thumbDir.isAbsolute()) {
+                // 如果是相对路径，转换为绝对路径
+                thumbDir = new File(System.getProperty("user.dir"), thumbnailDir + "/image");
             }
             
-            // 生成缩略图文件名（使用 MD5）
-            String hash = calculateMD5(imageFile);
+            if (!thumbDir.exists()) {
+                boolean created = thumbDir.mkdirs();
+                if (!created) {
+                    log.error("无法创建缩略图目录: {}", thumbDir.getAbsolutePath());
+                    return null;
+                }
+                log.info("创建缩略图目录: {}", thumbDir.getAbsolutePath());
+            }
+            
+            // 生成缩略图文件名（使用文件路径哈希，避免计算大文件MD5）
+            String hash = Integer.toHexString(imageFile.getAbsolutePath().hashCode());
             String thumbnailName = hash + ".jpg";
             File thumbnailFile = new File(thumbDir, thumbnailName);
             
@@ -95,10 +105,20 @@ public class ThumbnailService {
      */
     public String generateVideoThumbnail(File videoFile, String ffmpegPath) {
         try {
-            // 确保缩略图目录存在
-            File thumbDir = new File(thumbnailDir + "/video");
+            // 确保缩略图目录存在（使用绝对路径）
+            File thumbDir = new File(thumbnailDir, "video");
+            if (!thumbDir.isAbsolute()) {
+                // 如果是相对路径，转换为绝对路径
+                thumbDir = new File(System.getProperty("user.dir"), thumbnailDir + "/video");
+            }
+            
             if (!thumbDir.exists()) {
-                thumbDir.mkdirs();
+                boolean created = thumbDir.mkdirs();
+                if (!created) {
+                    log.error("无法创建缩略图目录: {}", thumbDir.getAbsolutePath());
+                    return null;
+                }
+                log.info("创建缩略图目录: {}", thumbDir.getAbsolutePath());
             }
             
             // 使用文件路径的哈希作为缩略图文件名（避免计算大文件MD5）
@@ -143,7 +163,7 @@ public class ThumbnailService {
                 log.info("视频缩略图生成成功: {}", thumbnailFile.getName());
                 return thumbnailFile.getAbsolutePath();
             } else {
-                log.warn("FFmpeg 生成视频缩略图失败，退出码: {}", exitCode);
+                log.warn("FFmpeg 生成视频缩略图失败，退出码: {}, 文件: {}", exitCode, thumbnailFile.getAbsolutePath());
                 return null;
             }
             

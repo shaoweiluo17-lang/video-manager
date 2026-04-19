@@ -177,7 +177,7 @@ scan:
   
   # 缩略图存储路径
   # 【重要】请修改为NAS上的实际路径，确保有写入权限
-  # 示例: /home/user/video-manager/data/thumbnails
+  # 示例: /vol2/1000/my_project/video-manager/data/thumbnails
   thumbnail-dir: ./data/thumbnails
 
 # ------------------------------------------------------------
