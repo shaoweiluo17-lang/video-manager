@@ -101,8 +101,8 @@ public class ThumbnailService {
                 thumbDir.mkdirs();
             }
             
-            // 生成缩略图文件名
-            String hash = calculateMD5(videoFile);
+            // 使用文件路径的哈希作为缩略图文件名（避免计算大文件MD5）
+            String hash = Integer.toHexString(videoFile.getAbsolutePath().hashCode());
             String thumbnailName = hash + ".jpg";
             File thumbnailFile = new File(thumbDir, thumbnailName);
             
@@ -111,26 +111,39 @@ public class ThumbnailService {
                 return thumbnailFile.getAbsolutePath();
             }
             
+            log.info("生成视频缩略图: {}", videoFile.getName());
+            
             // 使用 FFmpeg 生成缩略图
             ProcessBuilder pb = new ProcessBuilder(
                 ffmpegPath,
                 "-y",                      // 覆盖输出文件
                 "-i", videoFile.getPath(),  // 输入文件
-                "-ss", "00:00:01",          // 截取时间点
+                "-ss", "00:00:01",          // 截取第1秒
                 "-vframes", "1",            // 只取一帧
                 "-q:v", "2",                // 输出质量
                 "-vf", String.format("scale=%d:%d", thumbnailWidth, thumbnailHeight),
                 thumbnailFile.getPath()     // 输出文件
             );
             
+            pb.redirectErrorStream(true);
             Process process = pb.start();
+            
+            // 读取输出（避免进程阻塞）
+            try (java.io.BufferedReader reader = new java.io.BufferedReader(
+                    new java.io.InputStreamReader(process.getInputStream()))) {
+                String line;
+                while ((line = reader.readLine()) != null) {
+                    log.debug("FFmpeg: {}", line);
+                }
+            }
+            
             int exitCode = process.waitFor();
             
             if (exitCode == 0 && thumbnailFile.exists()) {
-                log.debug("生成视频缩略图: {} -> {}", videoFile.getName(), thumbnailFile.getName());
+                log.info("视频缩略图生成成功: {}", thumbnailFile.getName());
                 return thumbnailFile.getAbsolutePath();
             } else {
-                log.warn("FFmpeg 生成视频缩略图失败: {}", videoFile.getPath());
+                log.warn("FFmpeg 生成视频缩略图失败，退出码: {}", exitCode);
                 return null;
             }
             
@@ -186,11 +199,23 @@ public class ThumbnailService {
     /**
      * 计算文件 MD5
      */
+    /**
+     * 计算文件MD5（流式计算，避免内存溢出）
+     */
     private String calculateMD5(File file) throws IOException {
         try {
             MessageDigest md = MessageDigest.getInstance("MD5");
-            byte[] fileBytes = Files.readAllBytes(file.toPath());
-            byte[] digest = md.digest(fileBytes);
+            
+            // 使用流式读取，避免一次性加载大文件到内存
+            try (java.io.InputStream is = new java.io.FileInputStream(file)) {
+                byte[] buffer = new byte[8192]; // 8KB buffer
+                int read;
+                while ((read = is.read(buffer)) != -1) {
+                    md.update(buffer, 0, read);
+                }
+            }
+            
+            byte[] digest = md.digest();
             
             StringBuilder sb = new StringBuilder();
             for (byte b : digest) {
