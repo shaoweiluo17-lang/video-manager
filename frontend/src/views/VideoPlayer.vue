@@ -11,13 +11,16 @@
     <div class="player-container">
       <video 
         ref="videoRef"
-        class="video-js vjs-big-play-centered"
         controls
         autoplay
         preload="auto"
         @keydown="handleKeydown"
+        @error="handleVideoError"
+        @loadeddata="handleVideoLoaded"
+        @canplay="handleCanPlay"
       >
-        <source :src="streamUrl" type="video/mp4" />
+        <source v-if="streamUrl" :src="streamUrl" type="video/mp4" />
+        您的浏览器不支持视频播放
       </video>
     </div>
     
@@ -82,6 +85,8 @@ const loadVideo = async (id) => {
     video.value = res.data
     // 使用文件路径直接访问视频文件
     streamUrl.value = getVideoStreamUrl(res.data.filePath)
+    console.log('视频文件路径:', res.data.filePath)
+    console.log('视频流URL:', streamUrl.value)
   } catch (error) {
     console.error('加载视频失败', error)
     router.push('/videos')
@@ -154,6 +159,29 @@ const goBack = () => {
   router.push('/videos')
 }
 
+// 视频事件处理
+const handleVideoError = (e) => {
+  console.error('视频加载错误:', e)
+  const video = e.target
+  if (video.error) {
+    console.error('错误代码:', video.error.code)
+    console.error('错误信息:', video.error.message)
+    // 错误代码说明:
+    // 1 = MEDIA_ERR_ABORTED - 用户中止
+    // 2 = MEDIA_ERR_NETWORK - 网络错误
+    // 3 = MEDIA_ERR_DECODE - 解码错误
+    // 4 = MEDIA_ERR_SRC_NOT_SUPPORTED - 格式不支持
+  }
+}
+
+const handleVideoLoaded = () => {
+  console.log('视频数据已加载')
+}
+
+const handleCanPlay = () => {
+  console.log('视频可以播放')
+}
+
 const handleKeydown = (e) => {
   switch(e.key) {
     case 'ArrowUp':
@@ -219,11 +247,15 @@ onUnmounted(() => {
   display: flex;
   align-items: center;
   justify-content: center;
-  overflow: hidden;
+  background: #000;
+  min-height: 300px;
   
   video {
+    width: 100%;
+    height: 100%;
     max-width: 100%;
     max-height: 100%;
+    object-fit: contain;
   }
 }
 

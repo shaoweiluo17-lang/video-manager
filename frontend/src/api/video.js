@@ -32,7 +32,9 @@ export function deleteDislikedVideos() {
  */
 export function getVideoStreamUrl(filePath) {
   // 使用 /files 前缀直接访问文件系统
-  return `/files${filePath}`
+  // 对路径进行URL编码，处理中文和特殊字符
+  const encodedPath = encodeURI(filePath)
+  return `/files${encodedPath}`
 }
 
 /**
