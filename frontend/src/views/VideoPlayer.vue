@@ -80,7 +80,8 @@ const loadVideo = async (id) => {
   try {
     const res = await getVideo(id)
     video.value = res.data
-    streamUrl.value = getVideoStreamUrl(id)
+    // 使用文件路径直接访问视频文件
+    streamUrl.value = getVideoStreamUrl(res.data.filePath)
   } catch (error) {
     console.error('加载视频失败', error)
     router.push('/videos')
