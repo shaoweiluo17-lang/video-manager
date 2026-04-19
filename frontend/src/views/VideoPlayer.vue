@@ -107,8 +107,22 @@ const loadPlaylist = async () => {
 }
 
 const playVideo = (item) => {
+  // 直接使用已有的视频信息，避免重复请求后端
+  video.value = item
+  streamUrl.value = getVideoStreamUrl(item.filePath)
+  console.log('切换视频:', item.fileName)
+  console.log('视频流URL:', streamUrl.value)
+  
+  // 更新URL（不重新加载）
   router.push(`/videos/${item.id}/play`)
-  loadVideo(item.id)
+  
+  // 手动触发视频重新加载
+  nextTick(() => {
+    if (videoRef.value) {
+      videoRef.value.load()
+      videoRef.value.play().catch(e => console.log('自动播放失败:', e))
+    }
+  })
 }
 
 const playPrev = () => {
