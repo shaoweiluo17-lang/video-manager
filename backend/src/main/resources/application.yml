@@ -8,9 +8,10 @@ spring:
     name: video-manager
   
   datasource:
-    driver-class-name: org.sqlite.JDBC
-    url: jdbc:sqlite:${DB_PATH:/app/data/video-manager.db}
-    url: jdbc:sqlite:${DB_PATH:./data/video-manager.db}
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: jdbc:mysql://${MYSQL_HOST:localhost}:${MYSQL_PORT:3306}/${MYSQL_DATABASE:video_manager}?useUnicode=true&characterEncoding=utf8mb4&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true&useSSL=false
+    username: ${MYSQL_USERNAME:videomanager}
+    password: ${MYSQL_PASSWORD:your-password}
   
   servlet:
     multipart:
