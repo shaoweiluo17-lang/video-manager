@@ -115,8 +115,8 @@
     </el-container>
     
     <!-- 图片预览 -->
-    <el-dialog 
-      v-model="previewVisible" 
+    <el-dialog
+      v-model="previewVisible"
       :title="currentImage?.fileName"
       width="80%"
       destroy-on-close
@@ -278,4 +278,4 @@ onMounted(() => {
   background: #fff;
   border-bottom: 1px solid #ebeef5;
 }
-
+</style>

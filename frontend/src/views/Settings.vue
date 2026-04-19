@@ -86,13 +86,13 @@
                     <el-button 
                       type="primary" 
                       :loading="scanStatus.running"
-                      @click="startScan"
+                      @click="handleStartScan"
                     >
                       开始扫描
                     </el-button>
                     <el-button 
                       :disabled="!scanStatus.running"
-                      @click="stopScan"
+                      @click="handleStopScan"
                     >
                       停止扫描
                     </el-button>
@@ -143,12 +143,12 @@
 <script setup>
 import { ref, reactive, onMounted, onUnmounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { 
+import {
   getScanPaths, addScanPath, updateScanPath, deleteScanPath,
-  startScan, stopScan, getScanStatus, deleteEmptyFolders,
-  deleteDislikedVideos 
+  startScan, stopScan, getScanStatus, deleteEmptyFolders
 } from '@/api/scan'
 import { deleteDislikedImages } from '@/api/image'
+import { deleteDislikedVideos } from '@/api/video'
 
 const activeMenu = ref('/settings')
 const activeTab = ref('paths')
@@ -226,7 +226,7 @@ const loadScanStatus = async () => {
   }
 }
 
-const startScan = async () => {
+const handleStartScan = async () => {
   try {
     await startScan()
     ElMessage.success('扫描已开始')
@@ -236,7 +236,7 @@ const startScan = async () => {
   }
 }
 
-const stopScan = async () => {
+const handleStopScan = async () => {
   try {
     await stopScan()
     ElMessage.info('扫描已停止')
