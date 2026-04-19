@@ -100,10 +100,13 @@ public class VideoController {
     }
     
     /**
-     * 视频流播放
+     * 视频流播放（支持Range请求）
      */
     @GetMapping("/stream/{id}")
-    public ResponseEntity<Resource> streamVideo(@PathVariable Integer id) {
+    public ResponseEntity<Resource> streamVideo(
+            @PathVariable Integer id,
+            @RequestHeader(value = "Range", required = false) String rangeHeader) {
+        
         Video video = videoService.getVideoById(id);
         if (video == null) {
             return ResponseEntity.notFound().build();
@@ -114,13 +117,43 @@ public class VideoController {
             return ResponseEntity.notFound().build();
         }
         
+        long fileSize = videoFile.length();
         Resource resource = new FileSystemResource(videoFile);
         
-        return ResponseEntity.ok()
-                .header(HttpHeaders.CONTENT_TYPE, "video/mp4")
-                .header(HttpHeaders.ACCEPT_RANGES, "bytes")
-                .header(HttpHeaders.CONTENT_LENGTH, String.valueOf(videoFile.length()))
-                .body(resource);
+        // 如果没有Range头，返回完整文件
+        if (rangeHeader == null || rangeHeader.isEmpty()) {
+            return ResponseEntity.ok()
+                    .header(HttpHeaders.CONTENT_TYPE, "video/mp4")
+                    .header(HttpHeaders.ACCEPT_RANGES, "bytes")
+                    .header(HttpHeaders.CONTENT_LENGTH, String.valueOf(fileSize))
+                    .body(resource);
+        }
+        
+        // 解析Range头，格式: bytes=start-end
+        try {
+            String[] ranges = rangeHeader.replace("bytes=", "").split("-");
+            long start = Long.parseLong(ranges[0]);
+            long end = ranges.length > 1 && !ranges[1].isEmpty() 
+                    ? Long.parseLong(ranges[1]) 
+                    : fileSize - 1;
+            
+            long contentLength = end - start + 1;
+            
+            return ResponseEntity.status(206) // Partial Content
+                    .header(HttpHeaders.CONTENT_TYPE, "video/mp4")
+                    .header(HttpHeaders.ACCEPT_RANGES, "bytes")
+                    .header(HttpHeaders.CONTENT_LENGTH, String.valueOf(contentLength))
+                    .header(HttpHeaders.CONTENT_RANGE, 
+                            String.format("bytes %d-%d/%d", start, end, fileSize))
+                    .body(resource);
+        } catch (Exception e) {
+            // Range解析失败，返回完整文件
+            return ResponseEntity.ok()
+                    .header(HttpHeaders.CONTENT_TYPE, "video/mp4")
+                    .header(HttpHeaders.ACCEPT_RANGES, "bytes")
+                    .header(HttpHeaders.CONTENT_LENGTH, String.valueOf(fileSize))
+                    .body(resource);
+        }
     }
     
     /**

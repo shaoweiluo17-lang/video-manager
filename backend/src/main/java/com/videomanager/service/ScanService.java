@@ -253,11 +253,24 @@ public class ScanService {
      */
     private void scanDirectory(ScanPath scanPath) {
         File dir = new File(scanPath.getPath());
-        if (!dir.exists() || !dir.isDirectory()) {
-            log.warn("目录不存在或不是目录: {}", scanPath.getPath());
+        log.info("检查扫描路径: {}", scanPath.getPath());
+        
+        if (!dir.exists()) {
+            log.warn("目录不存在: {}", scanPath.getPath());
             return;
         }
         
+        if (!dir.isDirectory()) {
+            log.warn("路径不是目录: {}", scanPath.getPath());
+            return;
+        }
+        
+        if (!dir.canRead()) {
+            log.warn("无法读取目录（无权限）: {}", scanPath.getPath());
+            return;
+        }
+        
+        log.info("开始扫描目录: {}, 媒体类型: {}", scanPath.getPath(), scanPath.getMediaType());
         scanDirectoryRecursive(dir, scanPath.getMediaType());
     }
     
@@ -266,10 +279,18 @@ public class ScanService {
             return;
         }
         
+        log.debug("扫描目录: {}", dir.getAbsolutePath());
+        
         File[] files = dir.listFiles();
         if (files == null) {
+            log.warn("无法读取目录内容（可能无权限）: {}", dir.getAbsolutePath());
             return;
         }
+        
+        log.debug("目录 {} 包含 {} 个文件/文件夹", dir.getName(), files.length);
+        
+        int dirCount = 0;
+        int fileCount = 0;
         
         for (File file : files) {
             if (!isScanning.get()) {
@@ -277,12 +298,18 @@ public class ScanService {
             }
             
             if (file.isDirectory()) {
+                dirCount++;
                 scanDirectoryRecursive(file, mediaType);
             } else if (isMediaFile(file, mediaType)) {
+                fileCount++;
                 processMediaFile(file, mediaType);
                 scanCurrent.incrementAndGet();
                 scanProgress.set((int) (scanCurrent.get() * 100.0 / Math.max(scanTotal.get(), 1)));
             }
+        }
+        
+        if (dirCount > 0 || fileCount > 0) {
+            log.debug("目录 {} 扫描完成: {} 个子目录, {} 个媒体文件", dir.getName(), dirCount, fileCount);
         }
     }
     
@@ -335,6 +362,16 @@ public class ScanService {
         if (videoMapper.selectCount(videoWrapper) > 0) {
             log.debug("跳过重复视频: {}", file.getName());
             return;
+        }
+        
+        // 生成视频缩略图（需要FFmpeg）
+        try {
+            String thumbnailPath = thumbnailService.generateVideoThumbnail(file, "ffmpeg");
+            if (thumbnailPath != null) {
+                video.setThumbnailPath(thumbnailPath);
+            }
+        } catch (Exception e) {
+            log.warn("生成视频缩略图失败: {}", file.getName());
         }
         
         videoMapper.insert(video);

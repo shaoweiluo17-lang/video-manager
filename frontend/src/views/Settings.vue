@@ -75,11 +75,25 @@
                         {{ scanStatus.running ? '扫描中' : '空闲' }}
                       </el-tag>
                     </p>
-                    <p v-if="scanStatus.running">
-                      当前: {{ scanStatus.currentPath }}
-                    </p>
-                    <p v-if="scanStatus.running">
-                      已扫描: {{ scanStatus.scannedFiles }} 个文件
+                    
+                    <!-- 进度条 -->
+                    <div v-if="scanStatus.running || scanStatus.progress > 0" class="progress-section">
+                      <el-progress 
+                        :percentage="scanStatus.progress" 
+                        :stroke-width="20"
+                        :text-inside="true"
+                        :format="progressFormat"
+                      />
+                      <div class="progress-detail">
+                        <span>已扫描: {{ scanStatus.current }} 个文件</span>
+                        <span>总共: {{ scanStatus.total }} 个文件</span>
+                      </div>
+                    </div>
+                    
+                    <!-- 当前扫描路径 -->
+                    <p v-if="scanStatus.running && scanStatus.currentPath" class="current-path">
+                      <el-icon><Folder /></el-icon>
+                      当前路径: {{ scanStatus.currentPath }}
                     </p>
                   </div>
                   <div class="scan-actions">
@@ -143,6 +157,7 @@
 <script setup>
 import { ref, reactive, onMounted, onUnmounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
+import { Folder } from '@element-plus/icons-vue'
 import {
   getScanPaths, addScanPath, updateScanPath, deleteScanPath,
   startScan, stopScan, getScanStatus, deleteEmptyFolders
@@ -163,7 +178,9 @@ const pathForm = reactive({
 const scanStatus = reactive({
   running: false,
   currentPath: '',
-  scannedFiles: 0
+  current: 0,
+  total: 0,
+  progress: 0
 })
 
 let statusTimer = null
@@ -218,12 +235,22 @@ const deletePath = async (path) => {
 const loadScanStatus = async () => {
   try {
     const res = await getScanStatus()
-    scanStatus.running = res.data.running
+    scanStatus.running = res.data.isScanning
     scanStatus.currentPath = res.data.currentPath
-    scanStatus.scannedFiles = res.data.scannedFiles
+    scanStatus.current = res.data.current
+    scanStatus.total = res.data.total
+    scanStatus.progress = res.data.progress
   } catch (error) {
     console.error('加载扫描状态失败', error)
   }
+}
+
+// 进度条格式化函数
+const progressFormat = (percentage) => {
+  if (scanStatus.total === 0) {
+    return '准备中...'
+  }
+  return `${percentage}%`
 }
 
 const handleStartScan = async () => {
@@ -351,6 +378,42 @@ onUnmounted(() => {
     p {
       margin: 8px 0;
       font-size: 14px;
+    }
+    
+    .progress-section {
+      margin: 16px 0;
+      
+      .el-progress {
+        margin-bottom: 8px;
+      }
+      
+      .progress-detail {
+        display: flex;
+        justify-content: space-between;
+        font-size: 13px;
+        color: #909399;
+        margin-top: 8px;
+      }
+    }
+    
+    .current-path {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-top: 12px;
+      padding: 8px 12px;
+      background: #f5f7fa;
+      border-radius: 4px;
+      font-size: 13px;
+      color: #606266;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      
+      .el-icon {
+        flex-shrink: 0;
+        color: #409eff;
+      }
     }
   }
   

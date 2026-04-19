@@ -79,7 +79,12 @@ public class FileUtil {
      */
     public boolean isVideo(File file) {
         if (videoExtSet == null) {
-            videoExtSet = new HashSet<>(Arrays.asList(videoExtensions.toLowerCase().split(",")));
+            // 处理扩展名，移除点号
+            Set<String> exts = new HashSet<>();
+            for (String ext : videoExtensions.toLowerCase().split(",")) {
+                exts.add(ext.replace(".", "").trim());
+            }
+            videoExtSet = exts;
         }
         String ext = getExtension(file);
         return videoExtSet.contains(ext);
@@ -90,7 +95,12 @@ public class FileUtil {
      */
     public boolean isImage(File file) {
         if (imageExtSet == null) {
-            imageExtSet = new HashSet<>(Arrays.asList(imageExtensions.toLowerCase().split(",")));
+            // 处理扩展名，移除点号
+            Set<String> exts = new HashSet<>();
+            for (String ext : imageExtensions.toLowerCase().split(",")) {
+                exts.add(ext.replace(".", "").trim());
+            }
+            imageExtSet = exts;
         }
         String ext = getExtension(file);
         return imageExtSet.contains(ext);
