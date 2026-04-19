@@ -1,0 +1,26 @@
+{
+  "name": "video-manager-frontend",
+  "version": "1.0.0",
+  "description": "Video and Image Manager Frontend",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "@vueuse/core": "^10.7.2",
+    "axios": "^1.6.5",
+    "dayjs": "^1.11.10",
+    "element-plus": "^2.5.4",
+    "pinia": "^2.1.7",
+    "video.js": "^8.10.0",
+    "vue": "^3.4.15",
+    "vue-router": "^4.2.5"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-vue": "^5.2.4",
+    "sass": "^1.99.0",
+    "vite": "^8.0.8"
+  }
+}

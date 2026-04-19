@@ -1,0 +1,71 @@
+version: '3.8'
+
+services:
+  # ===========================================
+  # 视频文件管理后端服务
+  # ===========================================
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: video-manager-backend
+    ports:
+      - "8080:8080"
+    volumes:
+      # 数据持久化目录
+      - ./data:/app/data
+      # 视频文件路径（只读权限）
+      # 在下方添加您的视频文件夹路径，格式： - /your/path:/mnt/alias:ro
+      - /mnt/hdd1:/mnt/hdd1:ro
+      - /mnt/hdd2:/mnt/hdd2:ro
+      - /mnt/external:/mnt/external:ro
+    environment:
+      # JWT 密钥（生产环境请修改为复杂随机字符串）
+      - JWT_SECRET=video-manager-jwt-secret-key-2026
+      # 默认扫描路径（多个路径用逗号分隔）
+      - SCAN_PATHS=/mnt/hdd1,/mnt/hdd2,/mnt/external
+      # SQLite 数据库路径
+      - DB_PATH=/app/data/video-manager.db
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/api/auth/me"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+
+  # ===========================================
+  # Vue 前端 + Nginx 反向代理
+  # ===========================================
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: video-manager-frontend
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
+    restart: unless-stopped
+    volumes:
+      # Nginx 配置（可选，自定义反向代理规则）
+      - ./nginx.conf:/etc/nginx/conf.d/default.conf:ro
+
+# ===========================================
+# 网络配置
+# ===========================================
+networks:
+  default:
+    name: video-manager-network
+    driver: bridge
+
+# ===========================================
+# 卷标说明
+# ===========================================
+# ./data                  - 应用数据持久化（数据库、配置等）
+# /mnt/hdd1, /mnt/hdd2   - 视频文件存储路径（只读）
+# 
+# 添加更多视频路径格式：
+#   - /your/custom/path:/mnt/alias:ro
+#
+# 注意：路径后的 :ro 表示只读权限

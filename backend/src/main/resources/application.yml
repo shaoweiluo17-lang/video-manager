@@ -1,0 +1,65 @@
+server:
+  port: 8080
+  servlet:
+    context-path: /
+
+spring:
+  application:
+    name: video-manager
+  
+  datasource:
+    driver-class-name: org.sqlite.JDBC
+    url: jdbc:sqlite:${DB_PATH:/app/data/video-manager.db}
+    url: jdbc:sqlite:${DB_PATH:./data/video-manager.db}
+  
+  servlet:
+    multipart:
+      enabled: true
+      max-file-size: 100MB
+      max-request-size: 100MB
+
+  jackson:
+    date-format: yyyy-MM-dd HH:mm:ss
+    time-zone: Asia/Shanghai
+
+# MyBatis Plus 配置
+mybatis-plus:
+  mapper-locations: classpath*:/mapper/**/*.xml
+  type-aliases-package: com.videomanager.entity
+  configuration:
+    map-underscore-to-camel-case: true
+    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
+  global-config:
+    db-config:
+      id-type: auto
+      logic-delete-field: deleted
+      logic-delete-value: 1
+      logic-not-delete-value: 0
+
+# JWT 配置
+jwt:
+  secret: ${JWT_SECRET:video-manager-jwt-secret-key-2026-default-change-in-production}
+  expiration: 86400000  # 24 hours in milliseconds
+
+# 文件扫描配置
+scan:
+  paths: ${SCAN_PATHS:}
+  video-extensions: .mp4,.avi,.mkv,.mov,.wmv,.flv,.webm,.m4v
+  image-extensions: .jpg,.jpeg,.png,.gif,.bmp,.webp,.svg,.heic
+  thumbnail-width: 320
+  thumbnail-height: 320
+  thumbnail-dir: ${THUMBNAIL_DIR:/app/data/thumbnails}
+
+# 异步任务配置
+async:
+  core-pool-size: 2
+  max-pool-size: 4
+  queue-capacity: 100
+
+# 日志配置
+logging:
+  level:
+    root: INFO
+    com.videomanager: DEBUG
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
