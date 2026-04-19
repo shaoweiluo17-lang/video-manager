@@ -24,13 +24,13 @@ public class ThumbnailService {
     
     private static final Logger log = LoggerFactory.getLogger(ThumbnailService.class);
     
-    @Value("${thumbnail-dir:/app/data/thumbnails}")
+    @Value("${scan.thumbnail-dir:./data/thumbnails}")
     private String thumbnailDir;
     
-    @Value("${thumbnail-width:320}")
+    @Value("${scan.thumbnail-width:320}")
     private int thumbnailWidth;
     
-    @Value("${thumbnail-height:320}")
+    @Value("${scan.thumbnail-height:320}")
     private int thumbnailHeight;
     
     /**
